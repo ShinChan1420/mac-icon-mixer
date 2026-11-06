@@ -1,0 +1,43 @@
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+.Spotlight-V100
+.Trashes
+.fseventsd
+# Custom folder icon file (its name ends in a carriage return)
+Icon?
+
+# Swift Package Manager
+.build/
+.swiftpm/
+Package.resolved
+
+# Local app builds (the installer in installer/ is kept)
+build/
+*.app
+*.dSYM/
+
+# Xcode
+*.xcodeproj/
+*.xcworkspace/
+xcuserdata/
+DerivedData/
+
+# Editors
+.vscode/
+.idea/
+*.swp
+*~
+
+# Local AI tooling and third-party skills
+.claude/
+.agents/
+skills-lock.json
+.taste-skill/
+
+# Logs and temporary files
+*.log
+*.tmp
+.env
