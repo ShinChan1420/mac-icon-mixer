@@ -71,7 +71,7 @@ extension Mixer {
         case .none:
             glass = nil
         case .liquidGlass:
-            glass = liquidGlass(current, region: region, mask: mask, bounds: bounds, strength: strength, tint: tint, side: side)
+            glass = liquidGlass(current, mask: mask, bounds: bounds, strength: strength, tint: tint, side: side)
         case .frosted:
             glass = frosted(source, mask: mask, strength: strength, tint: tint, side: side)
         }
@@ -94,7 +94,7 @@ extension Mixer {
     // (edge light, sheen, tint, grain) remain.
 
     /// Mostly clear: bends what's behind it near the edges, with a sheen and a lit rim.
-    private static func liquidGlass(_ image: CGImage, region: CGImage, mask: CIImage, bounds: CGRect,
+    private static func liquidGlass(_ image: CGImage, mask: CIImage, bounds: CGRect,
                                     strength: Double, tint: MixColor, side: CGFloat) -> CIImage? {
         let extent = mask.extent
         let bendSigma = side * 0.03

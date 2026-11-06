@@ -1,26 +1,9 @@
 import AppKit
 import IconMixCore
 import SwiftUI
-import UniformTypeIdentifiers
-
-/// Spacing and corner sizes shared across the window, so everything lines up on one system.
-private enum Metric {
-    static let edge: CGFloat = 20
-    static let gap: CGFloat = 12
-    static let sourceWidth: CGFloat = 304
-    static let lookWidth: CGFloat = 348
-    static let labelWidth: CGFloat = 64
-    static let rowHeight: CGFloat = 26
-    static let wellWidth: CGFloat = 48
-    /// The control beside a colour well: the row's width, less the label, the well and their gaps.
-    static let besideWellWidth: CGFloat = lookWidth - edge * 2 - labelWidth - wellWidth - 16
-    static let cardCorner: CGFloat = 12
-    static let tileCorner: CGFloat = 10
-}
 
 struct ContentView: View {
     @Bindable var model: MixerModel
-    @Environment(\.colorScheme) private var colorScheme
 
     var body: some View {
         HStack(spacing: 0) {
@@ -37,9 +20,6 @@ struct ContentView: View {
             AdjustPanel(model: model)
                 .inspectorColumnWidth(min: 260, ideal: 280, max: 320)
         }
-        .onChange(of: colorScheme, initial: true) { _, scheme in
-            model.systemIsDark = scheme == .dark
-        }
     }
 
     // MARK: Left: what's being mixed
@@ -47,10 +27,10 @@ struct ContentView: View {
     private var sources: some View {
         VStack(spacing: Metric.gap) {
             SourceCard(title: "Folder or App", hint: "Drop a folder or app", symbol: "folder",
-                       caption: model.folderURL?.lastPathComponent, image: model.folderIcon,
+                       caption: model.targetURL?.lastPathComponent, image: model.targetIcon,
                        drop: { loadDrop($0, url: model.accept, data: model.accept(imageData:)) },
                        pick: pickFolder) {
-                if model.folderHasCustomIcon {
+                if model.targetHasCustomIcon {
                     Button("Remove Custom Icon", action: model.removeCustomIcon)
                         .systemGlassButton()
                         .fixedSize()
@@ -95,7 +75,13 @@ struct ContentView: View {
                             .interpolation(.high)
                             .frame(width: side, height: side)
                     }
+                    if let tones = model.tonePreviews {
+                        Divider().frame(height: 64)
+                        TonePreview(title: "Light", image: tones.light, ground: Color(white: 0.93), ink: .black)
+                        TonePreview(title: "Dark", image: tones.dark, ground: Color(white: 0.11), ink: .white)
+                    }
                 }
+                .frame(height: 84, alignment: .bottom)
             } else {
                 Spacer()
                 Image(systemName: "plus.square.on.square")
@@ -128,10 +114,10 @@ struct ContentView: View {
             Spacer(minLength: 8)
             Button("Discard", role: .destructive, action: model.discard)
                 .systemGlassButton()
-                .disabled((model.folderURL == nil && model.imageName == nil) || model.isApplying)
+                .disabled((model.targetURL == nil && model.imageName == nil) || model.isApplying)
             Button("Adjust") { model.isAdjusting.toggle() }
                 .systemGlassButton(prominent: model.isAdjusting)
-                .disabled(!model.hasImage || model.folderURL == nil)
+                .disabled(!model.hasImage || model.targetURL == nil)
             Button("Apply", action: model.apply)
                 .systemGlassButton(prominent: true)
                 .keyboardShortcut(.defaultAction)
@@ -275,7 +261,7 @@ struct ContentView: View {
             }
             LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 8), count: 4), spacing: 8) {
                 ForEach(FolderLayer.allCases) { layer in
-                    let available = (!model.targetIsApp || layer.worksOnApps) && (model.hasImage || layer == .original)
+                    let available = model.isAvailable(layer)
                     LayerTile(title: layer.title, image: model.layerThumbnails[layer],
                               isSelected: layer.isSelected(in: model.settings)) {
                         model.choose(layer)
@@ -340,363 +326,5 @@ struct ContentView: View {
         let panel = NSOpenPanel()
         panel.allowedContentTypes = [.image]
         if panel.runModal() == .OK, let url = panel.url { model.acceptSecond(url) }
-    }
-}
-
-/// Reads dragged files or image data, handing each to the matching callback on the main actor.
-@MainActor
-private func loadDrop(_ providers: [NSItemProvider], url handleURL: @escaping @MainActor (URL) -> Void,
-                      data handleData: @escaping @MainActor (Data) -> Void) -> Bool {
-    var accepted = false
-    for provider in providers {
-        if provider.hasItemConformingToTypeIdentifier(UTType.fileURL.identifier) {
-            accepted = true
-            _ = provider.loadObject(ofClass: URL.self) { url, _ in
-                guard let url else { return }
-                Task { @MainActor in handleURL(url) }
-            }
-        } else if provider.hasItemConformingToTypeIdentifier(UTType.image.identifier) {
-            accepted = true
-            _ = provider.loadDataRepresentation(forTypeIdentifier: UTType.image.identifier) { data, _ in
-                guard let data else { return }
-                Task { @MainActor in handleData(data) }
-            }
-        }
-    }
-    return accepted
-}
-
-private extension View {
-    /// Lets a button or menu fill the width it's given.
-    @ViewBuilder func buttonSizingFlexible() -> some View {
-        if #available(macOS 26, *) {
-            buttonSizing(.flexible)
-        } else {
-            self
-        }
-    }
-
-    /// Stretches a segmented control to its column, so it ends on the same edge as the rest.
-    @ViewBuilder func fullWidthSegments() -> some View {
-        if #available(macOS 26, *) {
-            buttonSizing(.flexible).frame(maxWidth: .infinity)
-        } else {
-            frame(maxWidth: .infinity)
-        }
-    }
-
-    /// Apple's Liquid Glass button styles on macOS 26, and the matching classic styles before it.
-    @ViewBuilder func systemGlassButton(prominent: Bool = false) -> some View {
-        if #available(macOS 26, *) {
-            if prominent {
-                buttonStyle(.glassProminent)
-            } else {
-                buttonStyle(.glass)
-            }
-        } else if prominent {
-            buttonStyle(.borderedProminent)
-        } else {
-            buttonStyle(.bordered)
-        }
-    }
-
-    /// Hides a control but keeps its space, so showing it never moves anything around it.
-    func reservingSpace(visible: Bool) -> some View {
-        opacity(visible ? 1 : 0)
-            .disabled(!visible)
-            .accessibilityHidden(!visible)
-    }
-}
-
-/// One picture going into the mix. All three sources share this card.
-private struct SourceCard<Extra: View>: View {
-    let title: String
-    let hint: String
-    let symbol: String
-    let caption: String?
-    let image: NSImage?
-    var isEnabled = true
-    let drop: ([NSItemProvider]) -> Bool
-    let pick: () -> Void
-    @ViewBuilder let extra: () -> Extra
-
-    @State private var isTargeted = false
-
-    var body: some View {
-        VStack(spacing: 8) {
-            Text(title)
-                .font(.headline)
-                .frame(maxWidth: .infinity, alignment: .leading)
-            Group {
-                if let image {
-                    Image(nsImage: image)
-                        .resizable()
-                        .scaledToFit()
-                        .clipShape(RoundedRectangle(cornerRadius: 6))
-                } else {
-                    Image(systemName: symbol)
-                        .font(.system(size: 32, weight: .light))
-                        .foregroundStyle(.secondary)
-                }
-            }
-            .frame(maxWidth: .infinity, maxHeight: .infinity)
-            Text(caption ?? hint)
-                .font(.callout)
-                .foregroundStyle(caption == nil ? .secondary : .primary)
-                .lineLimit(1)
-                .truncationMode(.middle)
-            HStack(spacing: 6) {
-                Button(caption == nil ? "Choose…" : "Change…", action: pick)
-                    .systemGlassButton()
-                    .fixedSize()
-                extra()
-            }
-            .controlSize(.small)
-        }
-        .padding(Metric.gap)
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .background {
-            RoundedRectangle(cornerRadius: Metric.cardCorner)
-                .fill(isTargeted ? AnyShapeStyle(Color.accentColor.opacity(0.15)) : AnyShapeStyle(.quaternary.opacity(0.5)))
-            if isTargeted || caption == nil {
-                RoundedRectangle(cornerRadius: Metric.cardCorner)
-                    .strokeBorder(isTargeted ? Color.accentColor : Color.secondary.opacity(0.35),
-                                  style: StrokeStyle(lineWidth: 1.5, dash: [6, 4]))
-            }
-        }
-        .contentShape(Rectangle())
-        .onDrop(of: [.fileURL, .image], isTargeted: $isTargeted) { isEnabled && drop($0) }
-        .disabled(!isEnabled)
-        .opacity(isEnabled ? 1 : 0.45)
-    }
-}
-
-private struct LayerTile: View {
-    let title: String
-    let image: NSImage?
-    let isSelected: Bool
-    let action: () -> Void
-
-    @State private var isHovered = false
-    @Environment(\.accessibilityReduceMotion) private var reduceMotion
-    @Environment(\.isEnabled) private var isEnabled
-
-    var body: some View {
-        Button(action: action) {
-            VStack(spacing: 4) {
-                Group {
-                    if let image {
-                        Image(nsImage: image).resizable().interpolation(.high)
-                    } else {
-                        Color.clear
-                    }
-                }
-                .frame(width: 46, height: 46)
-                Text(title)
-                    .font(.caption2)
-                    .multilineTextAlignment(.center)
-                    .lineLimit(2)
-                    .frame(height: 26, alignment: .top)
-            }
-            .padding(.top, 6)
-            .padding(.horizontal, 2)
-            .frame(maxWidth: .infinity)
-            .background(isSelected ? Color.accentColor.opacity(0.25) : Color.secondary.opacity(isHovered ? 0.18 : 0.1),
-                        in: RoundedRectangle(cornerRadius: Metric.tileCorner))
-            .overlay {
-                RoundedRectangle(cornerRadius: Metric.tileCorner)
-                    .strokeBorder(isSelected ? Color.accentColor : .clear, lineWidth: 2)
-            }
-            .contentShape(Rectangle())
-        }
-        .buttonStyle(.plain)
-        .offset(y: isHovered && isEnabled && !reduceMotion ? -1 : 0)
-        .animation(reduceMotion ? nil : .easeOut(duration: 0.12), value: isHovered)
-        .onHover { isHovered = $0 }
-    }
-}
-
-/// The mixed icon. Dragging moves a layer and pinching zooms it; the strip above the
-/// front panel controls the second layer, everywhere else controls the front picture.
-private struct DraggablePreview: View {
-    let image: NSImage
-    let model: MixerModel
-
-    @State private var lastTranslation = CGSize.zero
-    @State private var dragLayer: EditLayer?
-    @State private var pinchLayer: EditLayer?
-    @State private var pinchStartZoom = 1.0
-    @State private var hoveredLayer: EditLayer?
-
-    var body: some View {
-        GeometryReader { geometry in
-            let side = min(geometry.size.width, geometry.size.height)
-            let top = (geometry.size.height - side) / 2
-            Image(nsImage: image)
-                .resizable()
-                .interpolation(.high)
-                .frame(width: side, height: side)
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
-                .contentShape(Rectangle())
-                .onTapGesture {
-                    guard model.settings.finish != .none else { return }
-                    model.settings.toggleGlassTone(systemIsDark: model.systemIsDark)
-                }
-                .onContinuousHover { phase in
-                    switch phase {
-                    case .active(let point): hoveredLayer = layer(atY: point.y, top: top, side: side)
-                    case .ended: hoveredLayer = nil
-                    }
-                }
-                .gesture(
-                    DragGesture(minimumDistance: 1)
-                        .onChanged { value in
-                            let target = dragLayer ?? layer(atY: value.startLocation.y, top: top, side: side)
-                            dragLayer = target
-                            if target == .back { model.isEditingBack = true }
-                            let dx = value.translation.width - lastTranslation.width
-                            let dy = value.translation.height - lastTranslation.height
-                            lastTranslation = value.translation
-                            model.settings.move(target, dx: dx / side, dy: -dy / side, shape: model.iconShape)
-                        }
-                        .onEnded { _ in
-                            lastTranslation = .zero
-                            dragLayer = nil
-                            model.isEditingBack = pinchLayer == .back
-                        }
-                )
-                .simultaneousGesture(
-                    MagnifyGesture()
-                        .onChanged { value in
-                            let target: EditLayer
-                            if let pinchLayer {
-                                target = pinchLayer
-                            } else {
-                                target = hoveredLayer ?? .front
-                                pinchLayer = target
-                                pinchStartZoom = model.settings.zoom(of: target)
-                            }
-                            if target == .back { model.isEditingBack = true }
-                            model.settings.setZoom(pinchStartZoom * value.magnification, of: target)
-                        }
-                        .onEnded { _ in
-                            pinchLayer = nil
-                            model.isEditingBack = dragLayer == .back
-                        }
-                )
-                .overlay(alignment: .top) {
-                    Text(hint)
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                        .multilineTextAlignment(.center)
-                }
-        }
-    }
-
-    private var hint: String {
-        let active = dragLayer ?? pinchLayer ?? hoveredLayer
-        let tone = model.settings.finish == .none ? "" : " Click to switch light and dark."
-        if active == .back { return "Second layer: drag to move, pinch to zoom.\(tone)" }
-        if model.settings.canEditBack {
-            return "Drag to move, pinch to zoom. Use the strip above the front for the second layer.\(tone)"
-        }
-        return "Drag to move, pinch to zoom.\(tone)"
-    }
-
-    private func layer(atY y: CGFloat, top: CGFloat, side: CGFloat) -> EditLayer {
-        model.settings.layer(atUnitY: (y - top) / side)
-    }
-}
-
-private struct AdjustPanel: View {
-    @Bindable var model: MixerModel
-
-    private var settings: MixSettings { model.settings }
-    private var hasSecondLayer: Bool { settings.style.hasBackOptions && !model.targetIsApp }
-    private var backIsPicture: Bool { hasSecondLayer && settings.canEditBack }
-    private var backHasContent: Bool { backIsPicture || (hasSecondLayer && settings.back == .color) }
-
-    var body: some View {
-        Form {
-            Picker("Layer", selection: $model.adjustingLayer) {
-                Text("First Layer").tag(EditLayer.front)
-                Text("Second Layer").tag(EditLayer.back)
-            }
-            .pickerStyle(.segmented)
-            .labelsHidden()
-            .fullWidthSegments()
-
-            switch model.adjustingLayer {
-            case .front: firstLayer
-            case .back: secondLayer
-            }
-            Button("Reset Adjustments", action: model.resetAdjustments)
-                .systemGlassButton()
-        }
-        .formStyle(.grouped)
-    }
-
-    @ViewBuilder private var firstLayer: some View {
-        Section("Placement") {
-            slider("Zoom", $model.settings.zoom, MixSettings.frontZoomRange)
-            slider("Horizontal", $model.settings.offsetX, -1...1)
-            slider("Vertical", $model.settings.offsetY, -1...1)
-            slider("Rotation", $model.settings.rotation, -180...180)
-            slider("Opacity", $model.settings.opacity, 0...1)
-        }
-        Section("Photo") {
-            slider("Brightness", $model.settings.brightness, -0.5...0.5)
-            slider("Contrast", $model.settings.contrast, 0.5...1.5)
-            slider("Saturation", $model.settings.saturation, 0...2)
-        }
-    }
-
-    @ViewBuilder private var secondLayer: some View {
-        if !backHasContent {
-            Text(hasSecondLayer
-                 ? "Pick Plain Colour, Same Position or Different Position to adjust the second layer."
-                 : "This look has a single layer.")
-                .font(.caption)
-                .foregroundStyle(.secondary)
-        }
-        Section("Placement") {
-            Group {
-                slider("Zoom", backPlacement(\.backZoom) { _ in 1 }, MixSettings.backZoomRange, editsBack: true)
-                slider("Horizontal", backPlacement(\.backOffsetX) { $0.offsetX }, -1...1, editsBack: true)
-                slider("Vertical", backPlacement(\.backOffsetY) { $0.offsetY }, -1...1, editsBack: true)
-                slider("Rotation", backPlacement(\.backRotation) { $0.rotation }, -180...180, editsBack: true)
-            }
-            .disabled(!backIsPicture)
-            slider("Opacity", $model.settings.backOpacity, 0...1, editsBack: true)
-                .disabled(!backHasContent)
-        }
-        Section("Photo") {
-            slider("Brightness", $model.settings.backBrightness, -0.5...0.5, editsBack: true)
-            slider("Contrast", $model.settings.backContrast, 0.5...1.5, editsBack: true)
-            slider("Saturation", $model.settings.backSaturation, 0...2, editsBack: true)
-        }
-        .disabled(!backIsPicture)
-    }
-
-    /// While the back follows the front it shows the front's value; moving a slider gives it its own.
-    private func backPlacement(_ own: WritableKeyPath<MixSettings, Double>,
-                               following: @escaping (MixSettings) -> Double) -> Binding<Double> {
-        Binding {
-            model.settings.back == .samePosition ? following(model.settings) : model.settings[keyPath: own]
-        } set: { newValue in
-            model.settings.detachBack()
-            model.settings[keyPath: own] = newValue
-        }
-    }
-
-    private func slider(_ title: String, _ value: Binding<Double>, _ range: ClosedRange<Double>,
-                        editsBack: Bool = false) -> some View {
-        VStack(alignment: .leading, spacing: 2) {
-            Text(title).font(.caption).foregroundStyle(.secondary)
-            Slider(value: value, in: range) { isEditing in
-                if editsBack { model.isEditingBack = isEditing }
-            }
-            .labelsHidden()
-        }
     }
 }

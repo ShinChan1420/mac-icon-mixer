@@ -19,6 +19,7 @@ swift test
 | `Sources/IconMixCore` | Image mixing and finishes, with no UI code. |
 | `Sources/IconMixer` | The SwiftUI app. |
 | `Tests/IconMixCoreTests` | Unit tests for the mixing code. |
+| `Tests/IconMixerTests` | Tests for Apply, Undo and input, using a fake icon store. |
 | `Resources` | `Info.plist` and the app icon. |
 | `scripts` | Build, installer and app icon scripts. |
 | `installer` | The DMG for the current release. |
@@ -55,6 +56,8 @@ In a pull request, say what changed and how you tested it. Add a screenshot if t
 ## Code
 
 - Keep rendering in `IconMixCore` so it can be unit tested. Views should only display state and pass on actions.
+- Reach the disk through `IconStoring`, so Apply and Undo can be tested with a fake store.
+- Prefer early returns: use `guard` for preconditions and avoid nested `if` blocks.
 - Add or update tests when rendering or settings change.
 - Use the values in `Metric` for spacing and sizes, and keep controls in the right column on the same edges.
 - Check layout changes with the Adjust panel open and closed, and with a folder and an app.

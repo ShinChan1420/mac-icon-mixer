@@ -8,5 +8,6 @@ let package = Package(
         .target(name: "IconMixCore"),
         .executableTarget(name: "IconMixer", dependencies: ["IconMixCore"]),
         .testTarget(name: "IconMixCoreTests", dependencies: ["IconMixCore"]),
+        .testTarget(name: "IconMixerTests", dependencies: ["IconMixer"]),
     ]
 )

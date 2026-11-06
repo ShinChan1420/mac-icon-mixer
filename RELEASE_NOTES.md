@@ -1,5 +1,11 @@
 # Release notes
 
+## Unreleased
+
+- With Tone on Auto, folder and app icons now follow your Mac's Light and Dark mode while Icon Mixer is running.
+- Auto shows a Light and a Dark preview side by side.
+- Auto is the default tone.
+
 ## 1.0.0
 
 6 November 2026

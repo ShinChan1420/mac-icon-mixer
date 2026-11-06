@@ -25,7 +25,7 @@ final class MixerTests: XCTestCase {
     }
 
     private func render(_ settings: MixSettings, photo: CGImage? = nil) -> CGImage {
-        Mixer.render(folder: solid(0, 0, 1), photo: photo ?? solid(1, 0, 0), settings: settings, size: 256)!
+        Mixer.render(icon: solid(0, 0, 1), photo: photo ?? solid(1, 0, 0), settings: settings, size: 256)!
     }
 
     func testFillCoversThePanelAndLeavesTheTabAlone() {
@@ -109,7 +109,7 @@ final class MixerTests: XCTestCase {
     }
 
     private func renderShape(_ settings: MixSettings, photo: CGImage? = nil) -> CGImage {
-        Mixer.render(folder: folderShape, photo: photo ?? solid(1, 0, 0), settings: settings, size: 256)!
+        Mixer.render(icon: folderShape, photo: photo ?? solid(1, 0, 0), settings: settings, size: 256)!
     }
 
     private let backPoint = (x: 0.5, y: 0.8)
@@ -282,7 +282,7 @@ final class MixerTests: XCTestCase {
         var settings = MixSettings()
         settings.back = .color
         settings.backColor = MixColor(red: 0, green: 1, blue: 0)
-        let faded = Mixer.render(folder: folderShape, photo: solid(1, 0, 0), settings: settings, size: 256,
+        let faded = Mixer.render(icon: folderShape, photo: solid(1, 0, 0), settings: settings, size: 256,
                                  frontOpacity: 0.4)!
         let front = pixel(faded, 0.5, 0.4)
         XCTAssertEqual(Double(front[0]), 0.4 * 255, accuracy: 3, "40% front picture")
@@ -295,7 +295,7 @@ final class MixerTests: XCTestCase {
         settings.back = .samePosition
         settings.panelShadow = true
         let plain = renderShape(settings)
-        let explicit = Mixer.render(folder: folderShape, photo: solid(1, 0, 0), settings: settings, size: 256,
+        let explicit = Mixer.render(icon: folderShape, photo: solid(1, 0, 0), settings: settings, size: 256,
                                     frontOpacity: 1)!
         XCTAssertEqual(plain.dataProvider?.data, explicit.dataProvider?.data)
     }
@@ -303,7 +303,7 @@ final class MixerTests: XCTestCase {
     func testFadeLeavesSingleLayerStylesAlone() {
         var settings = MixSettings()
         settings.style = .cutout
-        let faded = Mixer.render(folder: folderShape, photo: solid(1, 0, 0), settings: settings, size: 256,
+        let faded = Mixer.render(icon: folderShape, photo: solid(1, 0, 0), settings: settings, size: 256,
                                  frontOpacity: 0.4)!
         XCTAssertEqual(pixel(faded, 0.5, 0.4), [255, 0, 0, 255])
     }
@@ -349,7 +349,7 @@ final class MixerTests: XCTestCase {
         settings.frontColor = MixColor(red: 1, green: 0, blue: 0)
         settings.back = .color
         settings.backColor = MixColor(red: 0, green: 1, blue: 0)
-        let faded = Mixer.render(folder: folderShape, photo: solid(1, 1, 1), settings: settings, size: 256,
+        let faded = Mixer.render(icon: folderShape, photo: solid(1, 1, 1), settings: settings, size: 256,
                                  frontOpacity: 0.4)!
         let out = pixel(faded, 0.1, 0.2)
         XCTAssertEqual(Double(out[0]), 0.4 * 255, accuracy: 3)
@@ -375,7 +375,7 @@ final class MixerTests: XCTestCase {
 
     func testAppFillFollowsTheIconOutline() {
         let icon = appIcon
-        let out = Mixer.render(folder: icon, photo: solid(1, 0, 0), settings: MixSettings(), size: 256,
+        let out = Mixer.render(icon: icon, photo: solid(1, 0, 0), settings: MixSettings(), size: 256,
                                shape: Mixer.shape(ofIcon: icon))!
         XCTAssertEqual(pixel(out, 0.5, 0.5), [255, 0, 0, 255])
         XCTAssertEqual(pixel(out, 0.5, 0.82), [255, 0, 0, 255], "reaches the top of the icon")
@@ -386,7 +386,7 @@ final class MixerTests: XCTestCase {
         let icon = appIcon
         var settings = MixSettings()
         settings.style = .sticker
-        let out = Mixer.render(folder: icon, photo: solid(1, 0, 0), settings: settings, size: 256,
+        let out = Mixer.render(icon: icon, photo: solid(1, 0, 0), settings: settings, size: 256,
                                shape: Mixer.shape(ofIcon: icon))!
         XCTAssertEqual(pixel(out, 0.5, 0.5), [255, 0, 0, 255])
         XCTAssertEqual(pixel(out, 0.15, 0.2), [0, 0, 255, 255], "app icon still shows")
@@ -397,7 +397,7 @@ final class MixerTests: XCTestCase {
         var settings = MixSettings()
         settings.style = .sticker
         settings.frontColor = MixColor(red: 0, green: 1, blue: 0)
-        let out = Mixer.render(folder: icon, photo: solid(1, 0, 0), settings: settings, size: 256,
+        let out = Mixer.render(icon: icon, photo: solid(1, 0, 0), settings: settings, size: 256,
                                shape: Mixer.shape(ofIcon: icon))!
         XCTAssertEqual(pixel(out, 0.15, 0.85), [0, 255, 0, 255])
         XCTAssertEqual(pixel(out, 0.05, 0.5)[3], 0)
@@ -409,7 +409,7 @@ final class MixerTests: XCTestCase {
         settings.back = .color
         settings.backColor = MixColor(red: 0, green: 1, blue: 0)
         settings.panelShadow = true
-        let out = Mixer.render(folder: icon, photo: solid(1, 0, 0), settings: settings, size: 256,
+        let out = Mixer.render(icon: icon, photo: solid(1, 0, 0), settings: settings, size: 256,
                                shape: Mixer.shape(ofIcon: icon))!
         XCTAssertEqual(pixel(out, 0.5, 0.82), [255, 0, 0, 255])
     }
@@ -500,9 +500,9 @@ final class MixerTests: XCTestCase {
     func testFadeTurnsTheFinishOffWhileEditing() {
         var settings = MixSettings()
         settings.back = .color
-        let plain = Mixer.render(folder: folderShape, photo: split, settings: settings, size: 256, frontOpacity: 0.4)!
+        let plain = Mixer.render(icon: folderShape, photo: split, settings: settings, size: 256, frontOpacity: 0.4)!
         settings.finish = .frosted
-        let glass = Mixer.render(folder: folderShape, photo: split, settings: settings, size: 256, frontOpacity: 0.4)!
+        let glass = Mixer.render(icon: folderShape, photo: split, settings: settings, size: 256, frontOpacity: 0.4)!
         XCTAssertEqual(plain.dataProvider?.data, glass.dataProvider?.data)
     }
 
@@ -510,7 +510,7 @@ final class MixerTests: XCTestCase {
         let icon = appIcon
         var settings = MixSettings()
         settings.finish = .frosted
-        let out = Mixer.render(folder: icon, photo: solid(1, 0, 0), settings: settings, size: 256,
+        let out = Mixer.render(icon: icon, photo: solid(1, 0, 0), settings: settings, size: 256,
                                shape: Mixer.shape(ofIcon: icon))!
         XCTAssertEqual(pixel(out, 0.05, 0.5)[3], 0, "nothing outside the icon")
         XCTAssertGreaterThan(pixel(out, 0.5, 0.5)[1], 20)
@@ -680,7 +680,7 @@ final class MixerTests: XCTestCase {
         settings.back = .samePosition
         settings.finish = .frosted
         settings.finishTarget = .secondLayer
-        let out = Mixer.render(folder: folderShape, photo: split, settings: settings, size: 256, frontOpacity: 0.4)!
+        let out = Mixer.render(icon: folderShape, photo: split, settings: settings, size: 256, frontOpacity: 0.4)!
         XCTAssertTrue(isBlurred(out, y: 0.8))
     }
 
@@ -690,7 +690,7 @@ final class MixerTests: XCTestCase {
         settings.finish = finish
         settings.glassTone = tone
         if let color { settings.glassColor = color }
-        return Mixer.render(folder: folderShape, photo: solid(0.6, 0.6, 0.6), settings: settings, size: 256,
+        return Mixer.render(icon: folderShape, photo: solid(0.6, 0.6, 0.6), settings: settings, size: 256,
                             systemIsDark: systemIsDark)!
     }
 
@@ -764,7 +764,7 @@ final class MixerTests: XCTestCase {
         settings.backOffsetX = 0
         settings.backOffsetY = 0
         settings.backZoom = 1
-        let out = Mixer.render(folder: folderShape, photo: solid(1, 0, 0), settings: settings, size: 256,
+        let out = Mixer.render(icon: folderShape, photo: solid(1, 0, 0), settings: settings, size: 256,
                                secondPhoto: solid(0, 1, 0))!
         XCTAssertEqual(pixel(out, 0.5, 0.4), [255, 0, 0, 255], "first layer keeps its picture")
         let back = pixel(out, 0.5, 0.8)
@@ -775,10 +775,10 @@ final class MixerTests: XCTestCase {
     func testSecondPictureGetsItsOwnPhotoControls() {
         var settings = MixSettings()
         settings.back = .samePosition
-        let bright = pixel(Mixer.render(folder: folderShape, photo: solid(1, 0, 0), settings: settings, size: 256,
+        let bright = pixel(Mixer.render(icon: folderShape, photo: solid(1, 0, 0), settings: settings, size: 256,
                                         secondPhoto: solid(0.8, 0.8, 0.8))!, 0.5, 0.8)
         settings.backBrightness = -0.3
-        let dim = pixel(Mixer.render(folder: folderShape, photo: solid(1, 0, 0), settings: settings, size: 256,
+        let dim = pixel(Mixer.render(icon: folderShape, photo: solid(1, 0, 0), settings: settings, size: 256,
                                      secondPhoto: solid(0.8, 0.8, 0.8))!, 0.5, 0.8)
         XCTAssertLessThan(dim[0], bright[0])
     }
@@ -786,7 +786,7 @@ final class MixerTests: XCTestCase {
     func testWideSecondPictureStillCoversTheFolder() {
         var settings = MixSettings()
         settings.back = .samePosition
-        let out = Mixer.render(folder: folderShape, photo: solid(1, 0, 0), settings: settings, size: 256,
+        let out = Mixer.render(icon: folderShape, photo: solid(1, 0, 0), settings: settings, size: 256,
                                secondPhoto: solid(0, 1, 0, width: 400, height: 40))!
         XCTAssertGreaterThan(pixel(out, 0.1, 0.8)[1], 150)
         XCTAssertGreaterThan(pixel(out, 0.9, 0.8)[1], 150)
@@ -795,24 +795,25 @@ final class MixerTests: XCTestCase {
     func testFinishOnAnAppWithNoPicture() {
         let icon = appIcon
         var settings = MixSettings()
-        let plain = Mixer.render(folder: icon, photo: Mixer.noPhoto, settings: settings, size: 256,
+        let plain = Mixer.render(icon: icon, photo: Mixer.noPhoto, settings: settings, size: 256,
                                  shape: Mixer.shape(ofIcon: icon))!
         XCTAssertEqual(pixel(plain, 0.5, 0.5), [0, 0, 255, 255], "the app's own icon shows")
         settings.finish = .frosted
         settings.glassTone = .light
-        let glass = Mixer.render(folder: icon, photo: Mixer.noPhoto, settings: settings, size: 256,
+        let glass = Mixer.render(icon: icon, photo: Mixer.noPhoto, settings: settings, size: 256,
                                  shape: Mixer.shape(ofIcon: icon))!
         XCTAssertGreaterThan(pixel(glass, 0.5, 0.5)[0], 30, "white film on top")
         XCTAssertGreaterThan(pixel(glass, 0.5, 0.5)[2], 150, "still the app's colour")
         XCTAssertEqual(pixel(glass, 0.05, 0.5)[3], 0)
     }
 
-    func testGlassStartsLight() {
-        XCTAssertEqual(MixSettings().glassTone, .light)
+    func testGlassFollowsTheSystemByDefault() {
+        XCTAssertEqual(MixSettings().glassTone, .auto)
     }
 
     func testToggleSwitchesBetweenLightAndDark() {
         var settings = MixSettings()
+        settings.glassTone = .light
         settings.toggleGlassTone(systemIsDark: true)
         XCTAssertEqual(settings.glassTone, .dark)
         settings.toggleGlassTone(systemIsDark: true)
@@ -848,7 +849,7 @@ final class MixerTests: XCTestCase {
                                 space: sRGB, bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue)!
             return ctx.makeImage()!
         }()
-        let out = Mixer.render(folder: folderWithHole, photo: solid(1, 0, 0), settings: MixSettings(), size: 512)!
+        let out = Mixer.render(icon: folderWithHole, photo: solid(1, 0, 0), settings: MixSettings(), size: 512)!
         XCTAssertEqual(out.width, 512)
         XCTAssertEqual(pixel(out, 0.01, 0.99)[3], 0)
     }

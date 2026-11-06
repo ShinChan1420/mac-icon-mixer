@@ -63,12 +63,12 @@ Finish adds a glass surface: Liquid Glass is clear with a lit edge and bends the
 | Control | What it does |
 |---|---|
 | Apply to | On a folder, chooses the whole folder as one pane, the first layer, the second layer, or both layers as separate panes. |
-| Tone | Light, Dark, Custom, or Auto, which matches your Mac's mode when you press Apply. |
+| Tone | Auto follows your Mac's Light or Dark mode, and the window previews both. You can also pick Light, Dark or Custom. |
 | Strength | Sets the blur and bending. At 0 the picture stays sharp and only the glass surface shows. |
 
 Click the icon in the preview to switch between light and dark glass.
 
-A saved icon is one fixed picture, so it won't change if you switch your Mac between Light and Dark mode later. Press Apply again to update it.
+With a finish on and Tone set to Auto, Apply saves a light and a dark version of the icon, and Icon Mixer swaps them when your Mac changes mode. Icon Mixer has to be running for this, so it stays open when you close its window. To have it start with your Mac, add it under System Settings > General > Login Items. If the mode changed while it was closed, it catches up the next time it opens. Light, Dark and Custom tones stay as they are.
 
 ## Move and adjust
 
