@@ -1,10 +1,31 @@
 # Release notes
 
-## Unreleased
+## 1.0.1
 
-- With Tone on Auto, folder and app icons now follow your Mac's Light and Dark mode while Icon Mixer is running.
-- Auto shows a Light and a Dark preview side by side.
-- Auto is the default tone.
+7 November 2026
+
+### New
+
+- With Tone on Auto and a finish on, folder and app icons now follow your Mac's Light and Dark mode.
+- Auto shows a Light and a Dark preview side by side before you apply.
+- Auto is now the default tone.
+
+### Changed
+
+- Icon Mixer stays running when you close its window if it has icons to keep in step. If the mode changes while it's closed, it catches up the next time it opens.
+- Changing several settings at once now redraws the preview once instead of several times.
+
+### For developers
+
+- Split rendering, disk access and views into focused types.
+- Moved disk access behind a protocol, so Apply and Undo can be tested without real folders.
+- Added tests for the app's Apply and Undo logic and for real folders.
+- Added GitHub Actions workflows for build, test and CodeQL security scanning.
+
+### Known limits
+
+- Icons only follow the mode while Icon Mixer is running. To have it start with your Mac, add it under System Settings > General > Login Items.
+- A changed app icon only updates in the Dock after you quit and reopen that app.
 
 ## 1.0.0
 
